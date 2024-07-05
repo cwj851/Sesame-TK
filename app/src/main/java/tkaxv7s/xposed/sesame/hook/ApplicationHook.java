@@ -834,7 +834,7 @@ public class ApplicationHook implements IXposedHookLoadPackage {
                     case "com.eg.android.AlipayGphone.sesame.rpctest":
                         String method = intent.getStringExtra("method");
                         String data = intent.getStringExtra("data");
-                        Log.recordLog("收到测试消息:\n方法:" + fun + "\n数据:" + data);
+                        Log.record("收到测试消息:\n方法:" + fun + "\n数据:" + data);
                         requestString(method, data);
                         break;
                 }
