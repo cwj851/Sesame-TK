@@ -54,7 +54,7 @@ jobs:
         with:
           asset_name: Sesame-Normal-${{ github.event.release.tag_name }}.apk
           file: ${{ steps.sign_normal_apk.outputs.signedFile }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: ${{ secrets.TOKEN }}
           tag: ${{ github.ref }}
           overwrite: true
           checksums: sha256
@@ -65,7 +65,7 @@ jobs:
         with:
           asset_name: Sesame-Compatible-${{ github.event.release.tag_name }}.apk
           file: ${{ steps.sign_compatible_apk.outputs.signedFile }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: ${{ secrets.TOKEN }}
           tag: ${{ github.ref }}
           overwrite: true
           checksums: sha256
