@@ -1,6 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
+    def version = project.getProperties().get("version")
+    if (version == null || "unspecified".equalsIgnoreCase(version)) {
+        version = "TEST"
+    }
 
     compileSdk 34
     defaultConfig {
@@ -9,9 +13,23 @@ android {
         //noinspection ExpiredTargetSdkVersion
         targetSdk 31
         versionCode 80
-        versionName "1.3.0"
+        versionName version
     }
-flavorDimensions.add("default")
+    ext {
+        applicationName = "Sesame"
+        applicationType = "Normal"
+    }
+    flavorDimensions.add("default")
+    productFlavors {
+        normal {
+            dimension "default"
+            ext.applicationType = "Normal"
+        }
+        compatible {
+            dimension "default"
+            ext.applicationType = "Compatible"
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
