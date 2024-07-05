@@ -27,28 +27,6 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew assembleRelease -P version=${{ github.ref_name }}
 
-      - name: Sign Normal APK
-        id: sign_normal_apk
-        uses: ilharp/sign-android-release@v1
-        with:
-          releaseDir: app/build/outputs/apk/normal/release/
-          signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
-          keyAlias: ${{ secrets.ANDROID_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          buildToolsVersion: 31.0.0
-
-      - name: Sign Compatible APK
-        id: sign_compatible_apk
-        uses: ilharp/sign-android-release@v1
-        with:
-          releaseDir: app/build/outputs/apk/compatible/release/
-          signingKey: ${{ secrets.ANDROID_SIGNING_KEY }}
-          keyAlias: ${{ secrets.ANDROID_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          buildToolsVersion: 31.0.0
-
       - name: Upload Normal to Release
         uses: termux/upload-release-action@v4.2.0
         with:
