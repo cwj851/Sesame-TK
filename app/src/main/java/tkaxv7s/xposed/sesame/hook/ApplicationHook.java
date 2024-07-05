@@ -789,8 +789,8 @@ public class ApplicationHook implements IXposedHookLoadPackage {
                         try {
                             String method = intent.getStringExtra("method");
                             String data = intent.getStringExtra("data");
-                            Log.record("收到测试消息:\n方法:" + method + "\n数据:" + data);
-                            requestString(method, data);
+                            Log.debug("收到测试消息:\n方法:" + method + "\n数据:" + data + "\n结果:" + rpcBridge.requestObject(method, data));
+                            //requestString(method, data);
                         } catch (Throwable th) {
                             Log.i(TAG, "sesame rpctest err:");
                             Log.printStackTrace(TAG, th);
