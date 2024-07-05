@@ -335,7 +335,6 @@ public class AntForestV2 extends ModelTask {
                 Log.i(TAG, "执行中断-蚂蚁森林");
                 NotificationUtil.setStatusTextIdle();
             }
-            NotificationUtil.updateLastExecText("收：" + totalCollected + " 帮：" + totalHelpCollected);
         }
     }
 

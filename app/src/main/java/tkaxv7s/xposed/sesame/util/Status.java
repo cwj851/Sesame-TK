@@ -3,7 +3,6 @@ package tkaxv7s.xposed.sesame.util;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import lombok.Data;
 import tkaxv7s.xposed.sesame.data.ModelTask;
-import tkaxv7s.xposed.sesame.hook.ApplicationHook;
 import tkaxv7s.xposed.sesame.model.task.antForest.AntForestV2;
 
 import java.io.File;
@@ -63,6 +62,7 @@ public class Status {
      * 绿色经营，评级领奖已完成用户
      */
     private Map<String, Integer> greenFinancePrizesMap = new HashMap<String, Integer>();
+
 
     public static boolean canWaterFriendToday(String id, int count) {
         id = UserIdMap.getCurrentUid() + "-" + id;
@@ -707,8 +707,7 @@ public class Status {
         }
     }
 
-    private static synchronized void save() {
-        ApplicationHook.updateDay();
+    private static void save() {
         String json = JsonUtil.toJsonString(INSTANCE);
         Log.system(TAG, "保存 status.json");
         String currentUid = UserIdMap.getCurrentUid();

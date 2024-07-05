@@ -2,7 +2,6 @@ package tkaxv7s.xposed.sesame.util;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import lombok.Data;
-import tkaxv7s.xposed.sesame.hook.ApplicationHook;
 
 import java.io.File;
 import java.util.Calendar;
@@ -144,15 +143,14 @@ public class Statistics {
     }
 
     public static synchronized void unload() {
-        try {
+       try {
             JsonUtil.MAPPER.updateValue(INSTANCE, new Statistics());
         } catch (JsonMappingException e) {
             Log.printStackTrace(TAG, e);
         }
     }
 
-    private static synchronized void save() {
-        ApplicationHook.updateDay();
+    private static void save() {
         String json = JsonUtil.toJsonString(INSTANCE);
         Log.system(TAG, "保存 statistics.json");
         FileUtil.write2File(json, FileUtil.getStatisticsFile());
