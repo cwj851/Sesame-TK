@@ -1,4 +1,4 @@
-package tkaxv7s.xposed.sesame.model.task.testRpc;
+package tkaxv7s.xposed.sesame.testRpc;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -17,7 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class TestRPC extends ModelTask {
+public class TestRPC {
     private static final String TAG = TestRPC.class.getSimpleName();
 
     @Override

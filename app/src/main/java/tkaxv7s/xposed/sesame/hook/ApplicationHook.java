@@ -27,7 +27,7 @@ import tkaxv7s.xposed.sesame.rpc.NewRpcBridge;
 import tkaxv7s.xposed.sesame.rpc.OldRpcBridge;
 import tkaxv7s.xposed.sesame.rpc.RpcBridge;
 import tkaxv7s.xposed.sesame.util.*;
-import tkaxv7s.xposed.sesame.model.task.testRpc.TestRPC;
+import tkaxv7s.xposed.sesame.testRpc.TestRPC;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

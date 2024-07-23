@@ -1,4 +1,4 @@
-package tkaxv7s.xposed.sesame.model.task.testRpc;
+package tkaxv7s.xposed.sesame.testRpc;
 
 import tkaxv7s.xposed.sesame.hook.ApplicationHook;
 
