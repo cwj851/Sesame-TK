@@ -11,11 +11,18 @@ import android.widget.Toast;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import tkaxv7s.xposed.sesame.R;
+import tkaxv7s.xposed.sesame.util.JsonUtil;
+import tkaxv7s.xposed.sesame.util.TypeUtil;
 
 import java.io.Serializable;
+import java.lang.reflect.Type;
+import java.util.Objects;
 
 @Data
-public class ModelField implements Serializable {
+public class ModelField<T> implements Serializable {
+
+    @JsonIgnore
+    private final Type valueType;
 
     @JsonIgnore
     private String code;
@@ -23,29 +30,75 @@ public class ModelField implements Serializable {
     @JsonIgnore
     private String name;
 
-    protected volatile Object value;
-
     @JsonIgnore
-    protected Object defaultValue;
+    protected T defaultValue;
+
+    protected volatile T value;
 
     public ModelField() {
+        valueType = TypeUtil.getTypeArgument(this.getClass().getGenericSuperclass(), 0);
     }
 
-    public ModelField(Object value) {
-        this.defaultValue = value;
-        setValue(value);
+    public ModelField(T value) {
+        this(null, null, value);
     }
 
-    public ModelField(Object value, Object defaultValue) {
-        this.defaultValue = defaultValue;
-        setValue(value);
-    }
-
-    public ModelField(String code, String name, Object value) {
+    public ModelField(String code, String name, T value) {
+        this();
         this.code = code;
         this.name = name;
         this.defaultValue = value;
-        setValue(value);
+        setObjectValue(value);
+    }
+
+    public void setObjectValue(Object objectValue) {
+        if (objectValue == null) {
+            reset();
+            return;
+        }
+        value = JsonUtil.parseObject(objectValue, valueType);
+    }
+
+    @JsonIgnore
+    public String getType() {
+        return "DEFAULT";
+    }
+
+    @JsonIgnore
+    public Object getExpandKey() {
+        return null;
+    }
+
+    @JsonIgnore
+    public Object getExpandValue() {
+        return null;
+    }
+
+    public Object toConfigValue(T value) {
+        return value;
+    }
+
+    public Object fromConfigValue(String value) {
+        return value;
+    }
+
+    @JsonIgnore
+    public String getConfigValue() {
+        return JsonUtil.toJsonString(toConfigValue(value));
+    }
+
+    @JsonIgnore
+    public void setConfigValue(String configValue) {
+        if (configValue == null) {
+            reset();
+            return;
+        }
+        Object objectValue = fromConfigValue(configValue);
+        if (Objects.equals(objectValue, configValue)) {
+            value = JsonUtil.parseObject(configValue, valueType);
+        } else {
+            value = JsonUtil.parseObject(objectValue, valueType);
+        }
     }
 
     public void reset() {
@@ -53,20 +106,11 @@ public class ModelField implements Serializable {
     }
 
     @JsonIgnore
-    public String getConfigValue() {
-        return String.valueOf(getValue());
-    }
-
-    public void setConfigValue(String value) {
-        setValue(value);
-    }
-
-    @JsonIgnore
     public View getView(Context context) {
         TextView btn = new TextView(context);
         btn.setText(getName());
         btn.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        btn.setTextColor(Color.parseColor("#008175"));
+        btn.setTextColor(Color.parseColor("#216EEE"));
         btn.setBackground(context.getResources().getDrawable(R.drawable.button));
         btn.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         btn.setMinHeight(150);

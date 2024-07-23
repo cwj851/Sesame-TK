@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
+import android.graphics.Color;
 import android.content.Intent;
 import android.net.Uri;
 import android.view.LayoutInflater;
@@ -11,13 +12,19 @@ import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AlertDialog;
 import tkaxv7s.xposed.sesame.R;
+import tkaxv7s.xposed.sesame.data.modelFieldExt.SelectAndCountModelField;
+import tkaxv7s.xposed.sesame.data.modelFieldExt.SelectAndCountOneModelField;
 import tkaxv7s.xposed.sesame.data.modelFieldExt.SelectModelField;
-import tkaxv7s.xposed.sesame.entity.*;
+import tkaxv7s.xposed.sesame.data.modelFieldExt.SelectOneModelField;
+import tkaxv7s.xposed.sesame.data.modelFieldExt.common.SelectModelFieldFunc;
+import tkaxv7s.xposed.sesame.entity.AlipayUser;
+import tkaxv7s.xposed.sesame.entity.AreaCode;
+import tkaxv7s.xposed.sesame.entity.CooperateUser;
+import tkaxv7s.xposed.sesame.entity.IdAndName;
 import tkaxv7s.xposed.sesame.util.CooperationIdMap;
 import tkaxv7s.xposed.sesame.util.UserIdMap;
 
 import java.util.List;
-import java.util.Map;
 
 public class ListDialog {
     static AlertDialog listDialog;
@@ -25,7 +32,7 @@ public class ListDialog {
             btn_select_all, btn_select_invert;
     static EditText searchText;
     static ListView lv_list;
-    static Map<String, Integer> selectedMap;
+    private static SelectModelFieldFunc selectModelFieldFunc;
     static Boolean hasCount;
 
     static ListType listType;
@@ -36,25 +43,40 @@ public class ListDialog {
         RADIO, CHECK, SHOW
     }
 
+    public static void show(Context c, CharSequence title, SelectOneModelField selectModelField, ListType listType) {
+        show(c, title, selectModelField.getExpandValue(), selectModelField, false, listType);
+    }
+
+    public static void show(Context c, CharSequence title, SelectAndCountOneModelField selectModelField, ListType listType) {
+        show(c, title, selectModelField.getExpandValue(), selectModelField, false, listType);
+    }
+
     public static void show(Context c, CharSequence title, SelectModelField selectModelField) {
         show(c, title, selectModelField, ListDialog.ListType.CHECK);
     }
 
+    public static void show(Context c, CharSequence title, SelectAndCountModelField selectModelField) {
+        show(c, title, selectModelField, ListDialog.ListType.CHECK);
+    }
+
     public static void show(Context c, CharSequence title, SelectModelField selectModelField, ListType listType) {
-        KVNode<Map<String, Integer>, Boolean> kvNode = selectModelField.getValue();
-        show(c, title, selectModelField.getIdAndNameList(), kvNode.getKey(), kvNode.getValue(), listType);
+        show(c, title, selectModelField.getExpandValue(), selectModelField, false, listType);
     }
 
-    public static void show(Context c, CharSequence title, List<? extends IdAndName> bl, Map<String, Integer> selectedMap, Boolean hasCount) {
-        show(c, title, bl, selectedMap, hasCount, ListType.CHECK);
+    public static void show(Context c, CharSequence title, SelectAndCountModelField selectModelField, ListType listType) {
+        show(c, title, selectModelField.getExpandValue(), selectModelField, true, listType);
     }
 
-    public static void show(Context c, CharSequence title, List<? extends IdAndName> bl, Map<String, Integer> selectedMap, Boolean hasCount, ListType listType) {
-        ListDialog.selectedMap = selectedMap;
+    public static void show(Context c, CharSequence title, List<? extends IdAndName> bl, SelectModelFieldFunc selectModelFieldFunc, Boolean hasCount) {
+        show(c, title, bl, selectModelFieldFunc, hasCount, ListType.CHECK);
+    }
+
+    public static void show(Context c, CharSequence title, List<? extends IdAndName> bl, SelectModelFieldFunc selectModelFieldFunc, Boolean hasCount, ListType listType) {
+        ListDialog.selectModelFieldFunc = selectModelFieldFunc;
         ListDialog.hasCount = hasCount;
         ListAdapter la = ListAdapter.getClear(c, listType);
         la.setBaseList(bl);
-        la.setSelectedList(selectedMap);
+        la.setSelectedList(selectModelFieldFunc);
         showListDialog(c, title);
         ListDialog.listType = listType;
     }
@@ -73,6 +95,10 @@ public class ListDialog {
             ListAdapter.get(c).notifyDataSetChanged();
         });
         listDialog.show();
+         Button positiveButton = listDialog.getButton(DialogInterface.BUTTON_POSITIVE);
+        if (positiveButton != null) {
+            positiveButton.setTextColor(Color.parseColor("#216EEE")); // 设置按钮颜色为红色
+        }
     }
 
     private static View getListView(Context c) {
@@ -140,7 +166,7 @@ public class ListDialog {
                     ListAdapter.ViewHolder curViewHolder = (ListAdapter.ViewHolder) p2.getTag();
                     if (!hasCount) {
                         if (listType == ListType.RADIO) {
-                            selectedMap.clear();
+                            selectModelFieldFunc.clear();
                             if (curViewHolder.cb.isChecked()) {
                                 curViewHolder.cb.setChecked(false);
                             } else {
@@ -149,15 +175,15 @@ public class ListDialog {
                                     viewHolder.cb.setChecked(false);
                                 }
                                 curViewHolder.cb.setChecked(true);
-                                selectedMap.put(curIdAndName.id, 0);
+                                selectModelFieldFunc.add(curIdAndName.id, 0);
                             }
                         } else {
                             if (curViewHolder.cb.isChecked()) {
-                                selectedMap.remove(curIdAndName.id);
+                                selectModelFieldFunc.remove(curIdAndName.id);
                                 curViewHolder.cb.setChecked(false);
                             } else {
-                                if (!selectedMap.containsKey(curIdAndName.id)) {
-                                    selectedMap.put(curIdAndName.id, 0);
+                                if (!selectModelFieldFunc.contains(curIdAndName.id)) {
+                                    selectModelFieldFunc.add(curIdAndName.id, 0);
                                 }
                                 curViewHolder.cb.setChecked(true);
                             }
@@ -176,13 +202,13 @@ public class ListDialog {
                                             } catch (Throwable t) {
                                                 return;
                                             }
-                                        Integer value = selectedMap.get(curIdAndName.id);
+                                        Integer value = selectModelFieldFunc.get(curIdAndName.id);
                                         if (count > 0) {
-                                            selectedMap.put(curIdAndName.id, count);
+                                            selectModelFieldFunc.add(curIdAndName.id, count);
                                             curViewHolder.cb.setChecked(true);
                                         } else {
                                             if (value != null && value >= 0) {
-                                                selectedMap.remove(curIdAndName.id);
+                                                selectModelFieldFunc.remove(curIdAndName.id);
                                             }
                                             curViewHolder.cb.setChecked(false);
                                         }
@@ -195,7 +221,7 @@ public class ListDialog {
                             edt_count.setHint("浇水克数");
                         else
                             edt_count.setHint("次数");
-                        Integer value = selectedMap.get(curIdAndName.id);
+                        Integer value = selectModelFieldFunc.get(curIdAndName.id);
                         if (value != null && value >= 0)
                             edt_count.setText(String.valueOf(value));
                         else
@@ -217,7 +243,7 @@ public class ListDialog {
                                             } else if (curIdAndName instanceof CooperateUser) {
                                                 CooperationIdMap.remove(curIdAndName.id);
                                             }
-                                            selectedMap.remove(curIdAndName.id);
+                                            selectModelFieldFunc.remove(curIdAndName.id);
                                             ListAdapter.get(c).exitFind();
                                         }
                                         ListAdapter.get(c).notifyDataSetChanged();
@@ -251,16 +277,16 @@ public class ListDialog {
                                                         break;
 
                                                     case 2:
-                                                        /*url = "https://render.alipay.com/p/s/i/?scheme=alipays%3a%2f%2fplatformapi%2fstartapp%3fappId%3d20000166%26actionType%3dprofile%26userId%3d";
+                                                        url = "alipays://platformapi/startapp?appId=20000166&actionType=profile&userId=";
                                                         break;
 
-                                                    case 3:*/
+                                                    case 3:
                                                         try {
                                                             new AlertDialog.Builder(c)
                                                                     .setTitle("删除 " + curIdAndName.name)
                                                                     .setPositiveButton(c.getString(R.string.ok), (dialog, which) -> {
                                                                         if (which == DialogInterface.BUTTON_POSITIVE) {
-                                                                            selectedMap.remove(curIdAndName.id);
+                                                                            selectModelFieldFunc.remove(curIdAndName.id);
                                                                             ListAdapter.get(c).exitFind();
                                                                         }
                                                                         ListAdapter.get(c).notifyDataSetChanged();

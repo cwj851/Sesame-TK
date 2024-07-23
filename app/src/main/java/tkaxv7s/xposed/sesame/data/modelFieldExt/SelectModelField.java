@@ -8,61 +8,43 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.type.TypeReference;
 import tkaxv7s.xposed.sesame.R;
 import tkaxv7s.xposed.sesame.data.ModelField;
+import tkaxv7s.xposed.sesame.data.modelFieldExt.common.SelectModelFieldFunc;
 import tkaxv7s.xposed.sesame.entity.IdAndName;
-import tkaxv7s.xposed.sesame.entity.KVNode;
 import tkaxv7s.xposed.sesame.ui.ListDialog;
-import tkaxv7s.xposed.sesame.util.JsonUtil;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 /**
  * 数据结构说明
- * KVNode<Map<String, Integer>, Boolean>
- *     Map<String, Integer> 表示已选择的数据与已经设置的数量映射关系，如果未设置数量，则默认为0
- *     Boolean 表示是否需要设置数量
+ * Set<String> 表示已选择的数据
  * List<? extends IdAndName> 需要选择的数据
  */
-public class SelectModelField extends ModelField {
-
-    private static final TypeReference<KVNode<LinkedHashMap<String, Integer>, Boolean>> typeReference = new TypeReference<KVNode<LinkedHashMap<String, Integer>, Boolean>>() {
-    };
+public class SelectModelField extends ModelField<Set<String>> implements SelectModelFieldFunc {
 
     private SelectListFunc selectListFunc;
 
-    private List<? extends IdAndName> idAndNameList;
+    private List<? extends IdAndName> expandValue;
 
-    public SelectModelField(String code, String name, KVNode<Map<String, Integer>, Boolean> value, List<? extends IdAndName> idAndNameList) {
+    public SelectModelField(String code, String name, Set<String> value, List<? extends IdAndName> expandValue) {
         super(code, name, value);
-        this.idAndNameList = idAndNameList;
+        this.expandValue = expandValue;
     }
 
-    public SelectModelField(String code, String name, KVNode<Map<String, Integer>, Boolean> value, SelectListFunc selectListFunc) {
+    public SelectModelField(String code, String name, Set<String> value, SelectListFunc selectListFunc) {
         super(code, name, value);
         this.selectListFunc = selectListFunc;
     }
 
-    @JsonIgnore
-    public List<? extends IdAndName> getIdAndNameList() {
-        return selectListFunc == null ? idAndNameList : selectListFunc.getList();
+    @Override
+    public String getType() {
+        return "SELECT";
     }
 
-    @Override
-    public void setValue(Object value) {
-        if (value == null) {
-            value = defaultValue;
-        }
-        this.value = JsonUtil.parseObject(value, typeReference);
-    }
-
-    @Override
-    public KVNode<Map<String, Integer>, Boolean> getValue() {
-        return (KVNode<Map<String, Integer>, Boolean>) value;
+    public List<? extends IdAndName> getExpandValue() {
+        return selectListFunc == null ? expandValue : selectListFunc.getList();
     }
 
     @Override
@@ -70,7 +52,7 @@ public class SelectModelField extends ModelField {
         Button btn = new Button(context);
         btn.setText(getName());
         btn.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        btn.setTextColor(Color.parseColor("#008175"));
+        btn.setTextColor(Color.parseColor("#216EEE"));
         btn.setBackground(context.getResources().getDrawable(R.drawable.button));
         btn.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         btn.setMinHeight(150);
@@ -81,30 +63,29 @@ public class SelectModelField extends ModelField {
         return btn;
     }
 
-    public static class SelectOneModelField extends SelectModelField {
+    @Override
+    public void clear() {
+        getValue().clear();
+    }
 
-        public SelectOneModelField(String code, String name, KVNode<Map<String, Integer>, Boolean> value, List<? extends IdAndName> idAndNameList) {
-            super(code, name, value, idAndNameList);
-        }
+    @Override
+    public Integer get(String id) {
+        return 0;
+    }
 
-        public SelectOneModelField(String code, String name, KVNode<Map<String, Integer>, Boolean> value, SelectListFunc selectListFunc) {
-            super(code, name, value, selectListFunc);
-        }
+    @Override
+    public void add(String id, Integer count) {
+        getValue().add(id);
+    }
 
-        @Override
-        public View getView(Context context) {
-            Button btn = new Button(context);
-            btn.setText(getName());
-            btn.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            btn.setTextColor(Color.parseColor("#008175"));
-            btn.setBackground(context.getResources().getDrawable(R.drawable.button));
-            btn.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
-            btn.setMinHeight(150);
-            btn.setPaddingRelative(40, 0, 40, 0);
-            btn.setAllCaps(false);
-            btn.setOnClickListener(v -> ListDialog.show(v.getContext(), ((Button) v).getText(), this, ListDialog.ListType.RADIO));
-            return btn;
-        }
+    @Override
+    public void remove(String id) {
+        getValue().remove(id);
+    }
+
+    @Override
+    public Boolean contains(String id) {
+        return getValue().contains(id);
     }
 
     public interface SelectListFunc {

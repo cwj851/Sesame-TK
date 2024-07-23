@@ -111,7 +111,7 @@ public class AntOceanRpcCall {
                 "\",\"source\":\"ANT_FOREST\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
     }
 
-    public static String querySeaAreaDetailList(String bubbleId, String userId) {
+    public static String collectEnergy(String bubbleId, String userId) {
         return ApplicationHook.requestString("alipay.antmember.forest.h5.collectEnergy",
                 "[{\"bubbleIds\":[" + bubbleId + "],\"channel\":\"ocean\",\"source\":\"ANT_FOREST\",\"uniqueId\":\"" +
                         getUniqueId() + "\",\"userId\":\"" + userId + "\",\"version\":\"" + VERSION + "\"}]");
@@ -183,6 +183,33 @@ public class AntOceanRpcCall {
     public static String PDLreceiveTaskAward(String taskType) {
         return ApplicationHook.requestString("com.alipay.antiep.receiveTaskAward",
                 "[{\"ignoreLimit\":\"false\",\"requestType\":\"RPC\",\"sceneCode\":\"ANTOCEAN_AVATAR_TASK\",\"source\":\"ANTFOCEAN\",\"taskType\":\"" + taskType + "\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
+    }
+
+    // 制作万能拼图
+    public static String exchangePropList() {
+        return ApplicationHook.requestString("alipay.antocean.ocean.h5.queryOceanPropList",
+                "[{\"skipPropId\":false,\"source\":\"ANT_FOREST\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
+    }
+    public static String exchangeProp() {
+        long timestamp = System.currentTimeMillis();
+        return ApplicationHook.requestString("alipay.antocean.ocean.h5.exchangeProp",
+                "[{\"bizNo\":\"" + timestamp + "\",\"exchangeNum\":\"1\",\"propCode\":\"UNIVERSAL_PIECE\",\"propType\":\"UNIVERSAL_PIECE\",\"source\":\"ANT_FOREST\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
+    }
+
+    // 使用万能拼图
+    public static String usePropByTypeList() {
+        return ApplicationHook.requestString("alipay.antocean.ocean.h5.queryOceanPropList",
+                "[{\"propTypeList\":\"UNIVERSAL_PIECE\",\"skipPropId\":false,\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
+    }
+
+    public static String queryFishList() {
+        return ApplicationHook.requestString("alipay.antocean.ocean.h5.queryFishList",
+                "[{\"combineStatus\":\"UNOBTAINED\",\"needSummary\":\"Y\",\"pageNum\":1,\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"targetUserId\":\"\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
+    }
+
+    public static String usePropByType(int assets, int attachAssets) {
+        return ApplicationHook.requestString("alipay.antocean.ocean.h5.usePropByType",
+                "[{\"assetsDetails\":[{\"assets\":" + assets + ",\"assetsNum\":1,\"attachAssets\":" + attachAssets + ",\"propCode\":\"UNIVERSAL_PIECE\"}],\"propCode\":\"UNIVERSAL_PIECE\",\"propType\":\"UNIVERSAL_PIECE\",\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"uniqueId\":\"" + getUniqueId() + "\"}]");
     }
 
 }

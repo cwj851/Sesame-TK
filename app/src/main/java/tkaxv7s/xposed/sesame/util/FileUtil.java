@@ -1,10 +1,10 @@
 package tkaxv7s.xposed.sesame.util;
 
 import android.os.Environment;
-import org.json.JSONObject;
 import tkaxv7s.xposed.sesame.hook.Toast;
 
 import java.io.*;
+import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -118,6 +118,10 @@ public class FileUtil {
         return write2File(json, new File(CONFIG_DIRECTORY_FILE + "/" + userId, "config_v2.json"));
     }
 
+    public static boolean setUIConfigFile(String json) {
+        return write2File(json, new File(MAIN_DIRECTORY_FILE, "ui_config.json"));
+    }
+
     public static File getSelfIdFile(String userId) {
         File file = new File(CONFIG_DIRECTORY_FILE + "/" + userId, "self.json");
         if (file.exists() && file.isDirectory()) {
@@ -184,6 +188,14 @@ public class FileUtil {
 
     public static File getBeachIdMapFile() {
         File file = new File(MAIN_DIRECTORY_FILE, "beach.json");
+        if (file.exists() && file.isDirectory()) {
+            file.delete();
+        }
+        return file;
+    }
+
+    public static File getUIConfigFile() {
+        File file = new File(MAIN_DIRECTORY_FILE, "ui_config.json");
         if (file.exists() && file.isDirectory()) {
             file.delete();
         }
@@ -369,7 +381,7 @@ public class FileUtil {
         for (File file : files) {
             String name = file.getName();
             if (name.endsWith(today + ".log")) {
-                if (file.length() < 209_715_200) {
+                if (file.length() < 104_857_600) {
                     continue;
                 }
             }
@@ -378,28 +390,6 @@ public class FileUtil {
             } catch (Exception e) {
                 Log.printStackTrace(e);
             }
-        }
-    }
-
-    public static File getCertCountFile(String userId) {
-        File file = new File(CONFIG_DIRECTORY_FILE + "/" + userId, "certCount.json");
-        if (file.exists()) {
-            if (file.isDirectory()) {
-                file.delete();
-            }
-        } else {
-            write2File(JsonUtil.toJsonString(new JSONObject()), file);
-        }
-        return file;
-    }
-
-    public static void setCertCount(String userId, String dateString, int certCount) {
-        try {
-            File certCountFile = getCertCountFile(userId);
-            JSONObject jo_certCount = new JSONObject(readFromFile(certCountFile));
-            jo_certCount.put(dateString, Integer.toString(certCount));
-            write2File(JsonUtil.toJsonString(jo_certCount), certCountFile);
-        } catch (Throwable ignored) {
         }
     }
 
@@ -474,8 +464,63 @@ public class FileUtil {
         return success;
     }
 
-    public static boolean copyTo(File f1, File f2) {
-        return write2File(readFromFile(f1), f2);
+    public static boolean copyTo(File source, File dest) {
+        FileChannel inputChannel = null;
+        FileChannel outputChannel = null;
+        try {
+            inputChannel = new FileInputStream(source).getChannel();
+            outputChannel = new FileOutputStream(createFile(dest)).getChannel();
+            outputChannel.transferFrom(inputChannel, 0, inputChannel.size());
+            return true;
+        } catch (IOException e) {
+            Log.printStackTrace(e);
+        } finally {
+            try {
+                if (inputChannel != null) {
+                    inputChannel.close();
+                }
+            } catch (IOException e) {
+                Log.printStackTrace(e);
+            }
+            try {
+                if (outputChannel != null) {
+                    outputChannel.close();
+                }
+            } catch (IOException e) {
+                Log.printStackTrace(e);
+            }
+        }
+        return false;
+    }
+
+    public static boolean streamTo(InputStream source, OutputStream dest) {
+        try {
+            byte[] b = new byte[1024];
+            int length;
+            while((length= source.read(b)) > 0){
+                dest.write(b,0,length);
+                dest.flush();
+            }
+            return true;
+        } catch (IOException e) {
+            Log.printStackTrace(e);
+        } finally {
+            try {
+                if (source != null) {
+                    source.close();
+                }
+            } catch (IOException e) {
+                Log.printStackTrace(e);
+            }
+            try {
+                if (dest != null) {
+                    dest.close();
+                }
+            } catch (IOException e) {
+                Log.printStackTrace(e);
+            }
+        }
+        return false;
     }
 
     public static void close(Closeable c) {
@@ -485,6 +530,48 @@ public class FileUtil {
         } catch (Throwable t) {
             Log.printStackTrace(TAG, t);
         }
+    }
+
+    public static File createFile(File file) {
+        if (file.exists() && file.isDirectory()) {
+            if (!file.delete()) {
+                return null;
+            }
+        }
+        if (!file.exists()) {
+            try {
+                File parentFile = file.getParentFile();
+                if (parentFile != null) {
+                    boolean ignore = parentFile.mkdirs();
+                }
+                if (!file.createNewFile()){
+                    return null;
+                }
+            } catch (Exception e) {
+                Log.printStackTrace(e);
+                return null;
+            }
+        }
+        return file;
+    }
+
+    public static File createDirectory(File file) {
+        if (file.exists() && file.isFile()) {
+            if (!file.delete()) {
+                return null;
+            }
+        }
+        if (!file.exists()) {
+            try {
+                if (!file.mkdirs()){
+                    return null;
+                }
+            } catch (Exception e) {
+                Log.printStackTrace(e);
+                return null;
+            }
+        }
+        return file;
     }
 
     public static Boolean clearFile(File file) {

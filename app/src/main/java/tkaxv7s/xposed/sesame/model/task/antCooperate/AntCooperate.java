@@ -3,11 +3,11 @@ package tkaxv7s.xposed.sesame.model.task.antCooperate;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import tkaxv7s.xposed.sesame.data.ModelFields;
-import tkaxv7s.xposed.sesame.data.ModelTask;
+import tkaxv7s.xposed.sesame.data.ModelGroup;
 import tkaxv7s.xposed.sesame.data.modelFieldExt.BooleanModelField;
-import tkaxv7s.xposed.sesame.data.modelFieldExt.SelectModelField;
+import tkaxv7s.xposed.sesame.data.modelFieldExt.SelectAndCountModelField;
+import tkaxv7s.xposed.sesame.data.task.ModelTask;
 import tkaxv7s.xposed.sesame.entity.CooperateUser;
-import tkaxv7s.xposed.sesame.entity.KVNode;
 import tkaxv7s.xposed.sesame.model.base.TaskCommon;
 import tkaxv7s.xposed.sesame.util.*;
 
@@ -21,9 +21,14 @@ public class AntCooperate extends ModelTask {
         return "合种";
     }
 
+    @Override
+    public ModelGroup getGroup() {
+        return ModelGroup.FOREST;
+    }
+
     private final BooleanModelField cooperateWater = new BooleanModelField("cooperateWater", "合种浇水", false);
-    private final SelectModelField cooperateWaterList = new SelectModelField("cooperateWaterList", "合种浇水列表", new KVNode<>(new LinkedHashMap<>(), true), CooperateUser::getList);
-    private final SelectModelField cooperateWaterTotalLimitList = new SelectModelField("cooperateWaterTotalLimitList", "浇水总量限制列表", new KVNode<>(new LinkedHashMap<>(), true), CooperateUser::getList);
+    private final SelectAndCountModelField cooperateWaterList = new SelectAndCountModelField("cooperateWaterList", "合种浇水列表", new LinkedHashMap<>(), CooperateUser::getList);
+    private final SelectAndCountModelField cooperateWaterTotalLimitList = new SelectAndCountModelField("cooperateWaterTotalLimitList", "浇水总量限制列表", new LinkedHashMap<>(), CooperateUser::getList);
     @Override
     public ModelFields getFields() {
         ModelFields modelFields = new ModelFields();
@@ -64,9 +69,9 @@ public class AntCooperate extends ModelTask {
                         if (!Status.canCooperateWaterToday(UserIdMap.getCurrentUid(), cooperationId)) {
                             continue;
                         }
-                        Integer num = cooperateWaterList.getValue().getKey().get(cooperationId);
+                        Integer num = cooperateWaterList.getValue().get(cooperationId);
                         if (num != null) {
-                            Integer limitNum = cooperateWaterTotalLimitList.getValue().getKey().get(cooperationId);
+                            Integer limitNum = cooperateWaterTotalLimitList.getValue().get(cooperationId);
                             if (limitNum != null) {
                                 num = calculatedWaterNum(UserIdMap.getCurrentUid(), cooperationId, num, limitNum);
                             }

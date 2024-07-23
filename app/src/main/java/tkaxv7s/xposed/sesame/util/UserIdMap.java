@@ -1,14 +1,13 @@
 package tkaxv7s.xposed.sesame.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import de.robv.android.xposed.XposedHelpers;
 import lombok.Getter;
 import tkaxv7s.xposed.sesame.entity.UserEntity;
-import tkaxv7s.xposed.sesame.hook.FriendManager;
+import tkaxv7s.xposed.sesame.hook.ApplicationHook;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.lang.reflect.Field;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UserIdMap {
@@ -32,9 +31,58 @@ public class UserIdMap {
         return userMap.values();
     }
 
-    public synchronized static void initUser(String userId) {
-        setCurrentUserId(userId);
-        FriendManager.fillUser();
+    public synchronized static void initUser(String currentUserId) {
+        setCurrentUserId(currentUserId);
+        ApplicationHook.getMainHandler().post(() -> {
+            ClassLoader loader;
+            try {
+                loader = ApplicationHook.getClassLoader();
+            } catch (Exception e) {
+                Log.i("Error getting classloader");
+                return;
+            }
+            try {
+                UserIdMap.unload();
+                String selfId = ApplicationHook.getUserId();
+                Class<?> clsUserIndependentCache = loader.loadClass("com.alipay.mobile.socialcommonsdk.bizdata.UserIndependentCache");
+                Class<?> clsAliAccountDaoOp = loader.loadClass("com.alipay.mobile.socialcommonsdk.bizdata.contact.data.AliAccountDaoOp");
+                Object aliAccountDaoOp = XposedHelpers.callStaticMethod(clsUserIndependentCache, "getCacheObj", clsAliAccountDaoOp);
+                List<?> allFriends = (List<?>) XposedHelpers.callMethod(aliAccountDaoOp, "getAllFriends", new Object[0]);
+                if (!allFriends.isEmpty()) {
+                    Class<?> friendClass = allFriends.get(0).getClass();
+                    Field userIdField = XposedHelpers.findField(friendClass, "userId");
+                    Field accountField = XposedHelpers.findField(friendClass, "account");
+                    Field nameField = XposedHelpers.findField(friendClass, "name");
+                    Field nickNameField = XposedHelpers.findField(friendClass, "nickName");
+                    Field remarkNameField = XposedHelpers.findField(friendClass, "remarkName");
+                    Field friendStatusField = XposedHelpers.findField(friendClass, "friendStatus");
+                    UserEntity selfEntity = null;
+                    for (Object userObject : allFriends) {
+                        try {
+                            String userId = (String) userIdField.get(userObject);
+                            String account = (String) accountField.get(userObject);
+                            String name = (String) nameField.get(userObject);
+                            String nickName = (String) nickNameField.get(userObject);
+                            String remarkName = (String) remarkNameField.get(userObject);
+                            Integer friendStatus = (Integer) friendStatusField.get(userObject);
+                            UserEntity userEntity = new UserEntity(userId, account, friendStatus, name, nickName, remarkName);
+                            if (Objects.equals(selfId, userId)) {
+                                selfEntity = userEntity;
+                            }
+                            UserIdMap.add(userEntity);
+                        } catch (Throwable t) {
+                            Log.i("addUserObject err:");
+                            Log.printStackTrace(t);
+                        }
+                    }
+                    UserIdMap.saveSelf(selfEntity);
+                }
+                UserIdMap.save(selfId);
+            } catch (Throwable t) {
+                Log.i("checkUnknownId.run err:");
+                Log.printStackTrace(t);
+            }
+        });
     }
 
     public synchronized static void setCurrentUserId(String userId) {
@@ -102,7 +150,7 @@ public class UserIdMap {
     }
 
     public synchronized static boolean save(String userId) {
-        return FileUtil.write2File(JsonUtil.toNoFormatJsonString(userMap), FileUtil.getFriendIdMapFile(userId));
+        return FileUtil.write2File(JsonUtil.toJsonString(userMap), FileUtil.getFriendIdMapFile(userId));
     }
 
     public synchronized static void loadSelf(String userId) {
@@ -120,7 +168,7 @@ public class UserIdMap {
     }
 
     public synchronized static boolean saveSelf(UserEntity userEntity) {
-        return FileUtil.write2File(JsonUtil.toNoFormatJsonString(userEntity), FileUtil.getSelfIdFile(userEntity.getUserId()));
+        return FileUtil.write2File(JsonUtil.toJsonString(userEntity), FileUtil.getSelfIdFile(userEntity.getUserId()));
     }
 
 }

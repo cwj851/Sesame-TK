@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import tkaxv7s.xposed.sesame.R;
 import tkaxv7s.xposed.sesame.data.ModelField;
 
-public class EmptyModelField extends ModelField {
+public class EmptyModelField extends ModelField<Object> {
 
     private final Runnable clickRunner;
 
@@ -28,12 +28,12 @@ public class EmptyModelField extends ModelField {
     }
 
     @Override
-    public void setValue(Object value) {
+    public String getType() {
+        return "EMPTY";
     }
 
     @Override
-    public Object getValue() {
-        return null;
+    public void setObjectValue(Object value) {
     }
 
     @JsonIgnore
@@ -41,7 +41,7 @@ public class EmptyModelField extends ModelField {
         Button btn = new Button(context);
         btn.setText(getName());
         btn.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        btn.setTextColor(Color.parseColor("#008175"));
+        btn.setTextColor(Color.parseColor("#216EEE"));
         btn.setBackground(context.getResources().getDrawable(R.drawable.button));
         btn.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
         btn.setMinHeight(150);

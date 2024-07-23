@@ -1,5 +1,6 @@
 package tkaxv7s.xposed.sesame.model.task.antForest;
 
+import tkaxv7s.xposed.sesame.entity.AlipayVersion;
 import tkaxv7s.xposed.sesame.entity.RpcEntity;
 import tkaxv7s.xposed.sesame.hook.ApplicationHook;
 import tkaxv7s.xposed.sesame.util.RandomUtil;
@@ -10,26 +11,37 @@ import java.util.UUID;
 
 public class AntForestRpcCall {
 
-    private static final String VERSION = "20240403";
+    private static String VERSION = "";
+
+    public static void init() {
+        AlipayVersion alipayVersion = ApplicationHook.getAlipayVersion();
+        if (alipayVersion.compareTo(new AlipayVersion("10.5.88.8000")) > 0) {
+            VERSION = "20240403";
+        } else if (alipayVersion.compareTo(new AlipayVersion("10.3.96.8100")) > 0) {
+            VERSION = "20230501";
+        } else {
+            VERSION = "20230501";
+        }
+    }
 
     private static String getUniqueId() {
         return String.valueOf(System.currentTimeMillis()) + RandomUtil.nextLong();
     }
 
-    public static String fillUserRobFlag(String userIdList) {
-        return ApplicationHook.requestString("alipay.antforest.forest.h5.fillUserRobFlag",
-                "[{\"userIdList\":" + userIdList + "}]");
-    }
-
     public static String queryEnergyRanking() {
         return ApplicationHook.requestString("alipay.antmember.forest.h5.queryEnergyRanking",
-                "[{\"periodType\":\"day\",\"rankType\":\"energyRank\",\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"version\":\""
-                        + VERSION + "\"}]");
+                "[{\"periodType\":\"total\",\"rankType\":\"energyRank\",\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"version\":\""
+                        + VERSION + "\"}]", "{\"pathList\":[\"friendRanking\",\"myself\",\"totalDatas\"]}");
+    }
+
+    public static String fillUserRobFlag(String userIdList) {
+        return ApplicationHook.requestString("alipay.antforest.forest.h5.fillUserRobFlag",
+                "[{\"userIdList\":" + userIdList + "}]", "{\"pathList\":[\"friendRanking\"]}");
     }
 
     public static String queryHomePage() {
         return ApplicationHook.requestString("alipay.antforest.forest.h5.queryHomePage",
-                "[{\"configVersionMap\":{\"wateringBubbleConfig\":\"10\"},\"skipWhackMole\":false,\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"version\":\""
+                "[{\"configVersionMap\":{\"wateringBubbleConfig\":\"10\"},\"skipWhackMole\":true,\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"version\":\""
                         + VERSION + "\"}]", 3, 1000);
     }
 
@@ -49,7 +61,7 @@ public class AntForestRpcCall {
             args1 = "[{\"bizType\":\"" + bizType + "\",\"bubbleIds\":[" + bubbleId
                     + "],\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"userId\":\"" + userId + "\"}]";
         }
-        return new RpcEntity("alipay.antmember.forest.h5.collectEnergy", args1);
+        return new RpcEntity("alipay.antmember.forest.h5.collectEnergy", args1, null);
     }
 
     public static String collectEnergy(String bizType, String userId, Long bubbleId) {
@@ -152,6 +164,22 @@ public class AntForestRpcCall {
                         + "\",\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"version\":\"" + VERSION + "\"}]");
     }
 
+    // 查询可派遣伙伴
+    public static String queryAnimalPropList() {
+        return ApplicationHook.requestString("alipay.antforest.forest.h5.queryAnimalPropList",
+                "[{\"source\":\"chInfo_ch_appcenter__chsub_9patch\"}]");
+    }
+
+    // 派遣动物伙伴
+    public static String consumeProp(String propGroup, String propType, Boolean replace) {
+        return ApplicationHook.requestString("alipay.antforest.forest.h5.consumeProp",
+                "[{\"propGroup\":\"" + propGroup
+                        + "\",\"propType\":\"" + propType
+                        + "\",\"replace\":\"" + (replace ? "true" : "false")
+                        + "\",\"sToken\":\"" + System.currentTimeMillis()
+                        + "\",\"source\":\"chInfo_ch_appcenter__chsub_9patch\"}]");
+    }
+
     public static String giveProp(String giveConfigId, String propId, String targetUserId) {
         return ApplicationHook.requestString("alipay.antforest.forest.h5.giveProp",
                 "[{\"giveConfigId\":\"" + giveConfigId + "\",\"propId\":\"" + propId
@@ -197,71 +225,6 @@ public class AntForestRpcCall {
 
     public static String testH5Rpc(String operationTpye, String requestDate) {
         return ApplicationHook.requestString(operationTpye, requestDate);
-    }
-
-    /* 神奇物种 */
-
-    public static String queryAnimalStatus() {
-        return ApplicationHook.requestString("alipay.antdodo.rpc.h5.queryAnimalStatus",
-                "[{\"source\":\"chInfo_ch_appcenter__chsub_9patch\"}]");
-    }
-
-    public static String antdodoHomePage() {
-        return ApplicationHook.requestString("alipay.antdodo.rpc.h5.homePage",
-                "[{}]");
-    }
-
-    public static String taskEntrance() {
-        return ApplicationHook.requestString("alipay.antdodo.rpc.h5.taskEntrance",
-                "[{\"statusList\":[\"TODO\",\"FINISHED\"]}]");
-    }
-
-    public static String antdodoCollect() {
-        return ApplicationHook.requestString("alipay.antdodo.rpc.h5.collect",
-                "[{}]");
-    }
-
-    public static String antdodoTaskList() {
-        return ApplicationHook.requestString("alipay.antdodo.rpc.h5.taskList",
-                "[{}]");
-    }
-
-    public static String antdodoFinishTask(String sceneCode, String taskType) {
-        String uniqueId = getUniqueId();
-        return ApplicationHook.requestString("com.alipay.antiep.finishTask",
-                "[{\"outBizNo\":\"" + uniqueId + "\",\"requestType\":\"rpc\",\"sceneCode\":\""
-                        + sceneCode + "\",\"source\":\"af-biodiversity\",\"taskType\":\""
-                        + taskType + "\",\"uniqueId\":\"" + uniqueId + "\"}]");
-    }
-
-    public static String antdodoReceiveTaskAward(String sceneCode, String taskType) {
-        return ApplicationHook.requestString("com.alipay.antiep.receiveTaskAward",
-                "[{\"ignoreLimit\":0,\"requestType\":\"rpc\",\"sceneCode\":\"" + sceneCode
-                        + "\",\"source\":\"af-biodiversity\",\"taskType\":\"" + taskType
-                        + "\"}]");
-    }
-
-    public static String antdodoPropList() {
-        return ApplicationHook.requestString("alipay.antdodo.rpc.h5.propList",
-                "[{}]");
-    }
-
-    public static String antdodoConsumeProp(String propId, String propType) {
-        return ApplicationHook.requestString("alipay.antdodo.rpc.h5.consumeProp",
-                "[{\"propId\":\"" + propId + "\",\"propType\":\"" + propType + "\"}]");
-    }
-
-    public static String queryBookInfo(String bookId) {
-        return ApplicationHook.requestString("alipay.antdodo.rpc.h5.queryBookInfo",
-                "[{\"bookId\":\"" + bookId + "\"}]");
-    }
-
-    // 送卡片给好友
-    public static String antdodoSocial(String targetAnimalId, String targetUserId) {
-        return ApplicationHook.requestString("alipay.antdodo.rpc.h5.social",
-                "[{\"actionCode\":\"GIFT_TO_FRIEND\",\"source\":\"GIFT_TO_FRIEND_FROM_CC\",\"targetAnimalId\":\""
-                        + targetAnimalId + "\",\"targetUserId\":\"" + targetUserId
-                        + "\",\"triggerTime\":\"" + System.currentTimeMillis() + "\"}]");
     }
 
     /* 巡护保护地 */
@@ -366,6 +329,10 @@ public class AntForestRpcCall {
         return ApplicationHook.requestString("alipay.antforest.forest.h5.settlementWhackMole",
                 "[{\"moleIdList\":[" + String.join(",", moleIdList)
                         + "],\"settlementScene\":\"NORMAL\",\"source\":\"chInfo_ch_appcenter__chsub_9patch\",\"token\":\"" + token + "\",\"version\":\"" + VERSION + "\"}]");
+    }
+
+    public static String closeWhackMole() {
+        return ApplicationHook.requestString("alipay.antforest.forest.h5.updateUserConfig", "[{\"configMap\":{\"whackMole\":\"N\"},\"source\":\"chInfo_ch_appcenter__chsub_9patch\"}]");
     }
 
     /* 森林集市 */
