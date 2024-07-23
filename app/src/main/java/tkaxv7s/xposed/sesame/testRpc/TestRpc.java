@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class TestRPC {
-    private static final String TAG = TestRPC.class.getSimpleName();
+    private static final String TAG = TestRPC.class.getCanonicalName();
 
     @Override
     public String getName() {
