@@ -12,7 +12,7 @@ android {
         minSdk 21
         //noinspection ExpiredTargetSdkVersion
         targetSdk 31
-        versionCode 80
+        versionCode 81
         versionName version
     }
     ext {
